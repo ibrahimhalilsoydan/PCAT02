@@ -4,14 +4,16 @@ import ejs from 'ejs';
 
 const app = express();
 
-
 //TEMPLATE ENGINE
-app.set("view engine", "ejs"); // ejs klasör yapısında viwes klasörüne bakar  bu yüzden temp klasörünü views yapıyıyoruz .
-
+app.set('view engine', 'ejs'); // ejs klasör yapısında viwes klasörüne bakar  bu yüzden temp klasörünü views yapıyıyoruz .
 
 //MIDDLEWARES
 app.use(express.static('public'));
 
+//Form verilerini okumak için (req.body'yi doldurur)
+app.use(express.urlencoded({extended:true}))
+//JSON verilerini okumak için (API yaparsan lazım olur)
+app.use(express.json())
 
 
 //bizim yazdığımız MIDDLEWARES
@@ -20,11 +22,8 @@ app.use(express.static('public'));
     next();
 } */
 
-
-
 //burada yukarıda yazdıgmız myLogger Middlewareyi çağırıyoruz
 //app.use(myLogger)
-
 
 //ROUTES ögrenme aşaması
 /* app.get('/', (req, res) => {
@@ -35,27 +34,26 @@ app.use(express.static('public'));
 
 //ROUTES
 
-app.get('/',(req,res)=>{
+app.get('/', (req, res) => {
+  res.render('index');
+});
 
-    res.render('index')
-})
+app.get('/about', (req, res) => {
+  res.render('about');
+});
 
-app.get('/about',(req,res)=>{
+app.get('/add', (req, res) => {
+  res.render('add');
+});
 
-    res.render('about')
-})
+app.get('/video-page', (req, res) => {
+  res.render('video-page');
+});
 
-app.get('/add',(req,res)=>{
-
-    res.render('add')
-})
-
-app.get('/video-page',(req,res)=>{
-
-    res.render('video-page')
-})
-
-
+app.post('/photos', (req, res) => {
+  console.log(req.body)
+  res.redirect('/');
+});
 
 const PORT = 3000;
 app.listen(PORT, () => {
