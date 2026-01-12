@@ -1,8 +1,12 @@
 import express from 'express';
+import conn from './config/db.js'
 import path from 'node:path';
 import ejs from 'ejs';
+import Photo from './models/Photo.js';
 
 const app = express();
+//Db bağlantısı
+conn();
 
 //TEMPLATE ENGINE
 app.set('view engine', 'ejs'); // ejs klasör yapısında viwes klasörüne bakar  bu yüzden temp klasörünü views yapıyıyoruz .
@@ -34,8 +38,11 @@ app.use(express.json())
 
 //ROUTES
 
-app.get('/', (req, res) => {
-  res.render('index');
+app.get('/', async(req, res) => {
+  const photos =await Photo.find({})
+  res.render('index',{
+    photos:photos
+  });
 });
 
 app.get('/about', (req, res) => {
@@ -50,8 +57,8 @@ app.get('/video-page', (req, res) => {
   res.render('video-page');
 });
 
-app.post('/photos', (req, res) => {
-  console.log(req.body)
+app.post('/photos', async(req, res) => {
+  await Photo.create(req.body)
   res.redirect('/');
 });
 
