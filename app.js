@@ -49,13 +49,20 @@ app.get('/about', (req, res) => {
   res.render('about');
 });
 
+/* app.get('/photos/:id', (req, res) => {
+  console.log(req.params.id)
+  //res.render('about');
+}); */
+
+app.get('/photos/:id', async (req, res) => {
+  const photo = await Photo.findById(req.params.id);
+  res.render('photo', { photo });
+});
+
 app.get('/add', (req, res) => {
   res.render('add');
 });
 
-app.get('/video-page', (req, res) => {
-  res.render('video-page');
-});
 
 app.post('/photos', async(req, res) => {
   await Photo.create(req.body)
@@ -66,3 +73,4 @@ const PORT = 3000;
 app.listen(PORT, () => {
   console.log(` Sunucu http://localhost:${PORT} da başlatıldı..`);
 });
+
