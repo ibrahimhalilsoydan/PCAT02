@@ -1,8 +1,14 @@
 import express from 'express';
 import conn from './config/db.js'
+import fileUpload from "express-fileupload";
 import path from 'node:path';
+import { fileURLToPath } from "url";
 import ejs from 'ejs';
+import fs from 'fs'
 import Photo from './models/Photo.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 //Db bağlantısı
@@ -13,6 +19,8 @@ app.set('view engine', 'ejs'); // ejs klasör yapısında viwes klasörüne baka
 
 //MIDDLEWARES
 app.use(express.static('public'));
+// express-fileupload middleware
+app.use(fileUpload());
 
 //Form verilerini okumak için (req.body'yi doldurur)
 app.use(express.urlencoded({extended:true}))
@@ -38,10 +46,13 @@ app.use(express.json())
 
 //ROUTES
 
-app.get('/', async(req, res) => {
-  const photos =await Photo.find({})
-  res.render('index',{
-    photos:photos
+
+
+app.get('/', async (req, res) => {
+  const photos = await Photo.find({}).sort('-dateCreated');
+
+  res.render('index', {
+    photos: photos
   });
 });
 
@@ -64,9 +75,26 @@ app.get('/add', (req, res) => {
 });
 
 
+
+const uploadDir = path.join(__dirname, "/public/uploads");
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
+
+
 app.post('/photos', async(req, res) => {
-  await Photo.create(req.body)
-  res.redirect('/');
+  //await Photo.create(req.body)
+  //res.redirect('/');
+   let uploadedImage = req.files.image;
+   let uploadPath =__dirname +'/public/uploads/'+ uploadedImage.name
+
+   uploadedImage.mv(uploadPath,async ()=>{
+    await Photo.create({
+      ...req.body,
+      image:'/uploads/'+uploadedImage.name,
+    });
+    res.redirect('/');
+   });
+   
+
 });
 
 const PORT = 3000;
