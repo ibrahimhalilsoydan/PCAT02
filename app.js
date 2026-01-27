@@ -1,10 +1,11 @@
 import express from 'express';
-import conn from './config/db.js'
-import fileUpload from "express-fileupload";
+import conn from './config/db.js';
+import fileUpload from 'express-fileupload';
+import methodOverride from 'method-override';
 import path from 'node:path';
-import { fileURLToPath } from "url";
+import { fileURLToPath } from 'url';
 import ejs from 'ejs';
-import fs from 'fs'
+import fs from 'fs';
 import Photo from './models/Photo.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -22,11 +23,15 @@ app.use(express.static('public'));
 // express-fileupload middleware
 app.use(fileUpload());
 
-//Form verilerini okumak için (req.body'yi doldurur)
-app.use(express.urlencoded({extended:true}))
-//JSON verilerini okumak için (API yaparsan lazım olur)
-app.use(express.json())
+// Parantez içindeki // Parantez içindeki '_method', URL'de arayacağımız parametre adıdı'_method', URL'de arayacağımız parametre adıdı
+app.use(methodOverride('_method',{
+  methods:['POST', 'GET']
+}));
 
+//Form verilerini okumak için (req.body'yi doldurur)
+app.use(express.urlencoded({ extended: true }));
+//JSON verilerini okumak için (API yaparsan lazım olur)
+app.use(express.json());
 
 //bizim yazdığımız MIDDLEWARES
 /* const myLogger =(req,res,next)=>{
@@ -46,13 +51,11 @@ app.use(express.json())
 
 //ROUTES
 
-
-
 app.get('/', async (req, res) => {
   const photos = await Photo.find({}).sort('-dateCreated');
 
   res.render('index', {
-    photos: photos
+    photos: photos,
   });
 });
 
@@ -74,31 +77,54 @@ app.get('/add', (req, res) => {
   res.render('add');
 });
 
-
-
-const uploadDir = path.join(__dirname, "/public/uploads");
+const uploadDir = path.join(__dirname, '/public/uploads');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
-
-app.post('/photos', async(req, res) => {
+app.post('/photos', async (req, res) => {
   //await Photo.create(req.body)
   //res.redirect('/');
-   let uploadedImage = req.files.image;
-   let uploadPath =__dirname +'/public/uploads/'+ uploadedImage.name
+  let uploadedImage = req.files.image;
+  let uploadPath = __dirname + '/public/uploads/' + uploadedImage.name;
 
-   uploadedImage.mv(uploadPath,async ()=>{
+  uploadedImage.mv(uploadPath, async () => {
     await Photo.create({
       ...req.body,
-      image:'/uploads/'+uploadedImage.name,
+      image: '/uploads/' + uploadedImage.name,
     });
     res.redirect('/');
-   });
-   
+  });
+});
+
+app.get('/photos/edit/:id', async (req, res) => {
+   const photo = await Photo.findById(req.params.id);
+  res.render('edit', { photo });
+  
+});
+
+
+app.put('/photos/:id', async(req, res) => {
+   const photo = await Photo.findById(req.params.id);
+   photo.title=req.body.title
+   photo.description=req.body.description
+   photo.save()
+
+   res.redirect(`/photos/${req.params.id}`)
 
 });
+
+app.delete('/photos/:id',async(req,res)=>{
+  const photo = await Photo.findOne({ _id: req.params.id });
+
+  let deletedImage = __dirname+'/public'+ photo.image;
+  fs.unlinkSync(deletedImage)
+
+  await Photo.findByIdAndDelete(req.params.id);
+
+  res.redirect('/');
+
+})
 
 const PORT = 3000;
 app.listen(PORT, () => {
   console.log(` Sunucu http://localhost:${PORT} da başlatıldı..`);
 });
-
